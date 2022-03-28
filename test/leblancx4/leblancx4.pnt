@@ -1,4 +1,4 @@
-tstop   6.0
+tstop   1.5
 meshtype rect
 meshparams 640 5760 1.0 9.0
 subregion 0.0 1.0  3.0 9.0
