@@ -26,18 +26,26 @@ namespace Parallel {
 // that will be overwritten on MPI_Init.
 int numpe = 0;
 int mype = -1;
+bool master = false;
 #else
 // We're in serial mode, so only 1 PE.
 int numpe = 1;
 int mype = 0;
+bool master = true;
 #endif
 
 
 void init() {
 #ifdef USE_MPI
+#ifdef _OPENMP
+    int ret;
+    MPI_Init_thread(0, 0, MPI_THREAD_FUNNELED, &ret);
+#else
     MPI_Init(0, 0);
+#endif
     MPI_Comm_size(MPI_COMM_WORLD, &numpe);
     MPI_Comm_rank(MPI_COMM_WORLD, &mype);
+    master = mype == 0;
 #endif
 }  // init
 
@@ -178,4 +186,3 @@ void gatherv(
 
 
 }  // namespace Parallel
-

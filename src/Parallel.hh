@@ -29,6 +29,11 @@ namespace Parallel {
                                 // (1 if not using MPI)
     extern int mype;            // PE number for my rank
                                 // (0 if not using MPI)
+    extern bool master;         // master MPI proc
+
+#ifdef USE_MPI
+    extern MPI_Comm mpi_comm;
+#endif
 
     void init();                // initialize MPI
     void final();               // finalize MPI
