@@ -162,6 +162,7 @@ void Driver::run() {
 
 void Driver::calcGlobalDt() {
 
+    using Parallel::mpi_comm;
     using Parallel::mype;
 
     // Save timestep from last cycle
@@ -210,13 +211,13 @@ void Driver::calcGlobalDt() {
             char cmsgdt[80];
             strncpy(cmsgdt, msgdt.c_str(), 80);
             MPI_Send(cmsgdt, 80, MPI_CHAR, 0, tagmpi,
-                    MPI_COMM_WORLD);
+		     mpi_comm);
         }
         else if (mype == 0) {
             char cmsgdt[80];
             MPI_Status status;
             MPI_Recv(cmsgdt, 80, MPI_CHAR, pedt, tagmpi,
-                    MPI_COMM_WORLD, &status);
+		     mpi_comm, &status);
             cmsgdt[79] = '\0';
             msgdt = string(cmsgdt);
         }
@@ -232,4 +233,3 @@ void Driver::calcGlobalDt() {
 #endif
 
 }
-

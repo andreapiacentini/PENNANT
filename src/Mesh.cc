@@ -383,7 +383,7 @@ void Mesh::write(
         wxy->write(probname, zr, ze, zp);
     }
     if (writegold) {
-        if (Parallel::mype == 0) 
+        if (Parallel::mype == 0)
             cout << "Writing gold file..." << endl;
         egold->write(probname, cycle, time, zr, ze, zp);
     }
@@ -605,6 +605,7 @@ void Mesh::parallelGather(
         const T* pvar,
         T* prxvar) {
 #ifdef USE_MPI
+    using Parallel::mpi_comm;
     // This routine gathers slave values for which MYPE owns the masters.
     const int tagmpi = 100;
     const int type_size = sizeof(T);
@@ -620,7 +621,7 @@ void Mesh::parallelGather(
         int nprx = slvpenumprx[slvpe];
         int prx1 = mapslvpeprx1[slvpe];
         MPI_Irecv(&prxvar[prx1], nprx * type_size, MPI_BYTE,
-                pe, tagmpi, MPI_COMM_WORLD, &request[slvpe]);
+                pe, tagmpi, mpi_comm, &request[slvpe]);
     }
 
     // Load slave data buffer from points.
@@ -635,7 +636,7 @@ void Mesh::parallelGather(
         int nslv = mstrpenumslv[mstrpe];
         int slv1 = mapmstrpeslv1[mstrpe];
         MPI_Send(&slvvar[slv1], nslv * type_size, MPI_BYTE,
-                pe, tagmpi, MPI_COMM_WORLD);
+                pe, tagmpi, mpi_comm);
     }
 
     // Wait for all receives to complete.
@@ -682,6 +683,7 @@ void Mesh::parallelScatter(
         T* pvar,
         const T* prxvar) {
 #ifdef USE_MPI
+    using Parallel::mpi_comm;
     // This routine scatters master values on MYPE to all slave copies
     // owned by other PEs.
     const int tagmpi = 200;
@@ -698,7 +700,7 @@ void Mesh::parallelScatter(
         int nslv = mstrpenumslv[mstrpe];
         int slv1 = mapmstrpeslv1[mstrpe];
         MPI_Irecv(&slvvar[slv1], nslv * type_size, MPI_BYTE,
-                pe, tagmpi, MPI_COMM_WORLD,  &request[mstrpe]);
+                pe, tagmpi, mpi_comm,  &request[mstrpe]);
     }
 
     // Send updated slave data from proxy buffer back to slave PEs.
@@ -707,7 +709,7 @@ void Mesh::parallelScatter(
         int nprx = slvpenumprx[slvpe];
         int prx1 = mapslvpeprx1[slvpe];
         MPI_Send((void*)&prxvar[prx1], nprx * type_size, MPI_BYTE,
-                pe, tagmpi, MPI_COMM_WORLD);
+                pe, tagmpi, mpi_comm);
     }
 
     // Wait for all receives to complete.
@@ -789,4 +791,3 @@ void Mesh::sumToPoints(
         sumAcrossProcs(pvar);
 
 }
-

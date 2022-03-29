@@ -35,12 +35,17 @@ CXXFLAGS_OPENMP := -qopenmp
 # select optimized or debug
 CXXFLAGS := $(CXXFLAGS_OPT)
 #CXXFLAGS := $(CXXFLAGS_DEBUG)
+LDFLAGS := $(CXXFLAGS)
 
 # add mpi to compile (comment out for serial build)
 # the following assumes the existence of an mpi compiler
 # wrapper called mpicxx
 CXX := mpiicpc
 CXXFLAGS += -DUSE_MPI
+
+# hippo
+CXXFLAGS += -I$(HIPPO_DIR)/include
+LDFLAGS += -L$(HWLOC_DIR)/lib -L$(HIPPO_DIR)/lib -Wl,-rpath,$(HWLOC_DIR)/lib -lhippo -lhwloc -lpthread -lifcore
 
 # add openmp flags (comment out for serial build)
 CXXFLAGS += $(CXXFLAGS_OPENMP)

@@ -17,7 +17,7 @@
 #include <numeric>
 
 #include "Vec2.hh"
-
+#include "hippo.h"
 
 namespace Parallel {
 
@@ -27,6 +27,7 @@ namespace Parallel {
 int numpe = 0;
 int mype = -1;
 bool master = false;
+MPI_Comm mpi_comm = MPI_COMM_NULL;
 #else
 // We're in serial mode, so only 1 PE.
 int numpe = 1;
@@ -43,8 +44,10 @@ void init() {
 #else
     MPI_Init(0, 0);
 #endif
-    MPI_Comm_size(MPI_COMM_WORLD, &numpe);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mype);
+    ret = HIPPO_Init(MPI_COMM_WORLD, HIPPO_VERBOSE, HIPPO_STDOUT);
+    mpi_comm = MPI_COMM_WORLD;
+    MPI_Comm_size(mpi_comm, &numpe);
+    MPI_Comm_rank(mpi_comm, &mype);
     master = mype == 0;
 #endif
 }  // init
@@ -52,6 +55,7 @@ void init() {
 
 void final() {
 #ifdef USE_MPI
+    int ret = HIPPO_Finalize();
     MPI_Finalize();
 #endif
 }  // final
@@ -70,7 +74,7 @@ void globalMinLoc(double& x, int& xpe) {
     xdi.d = x;
     xdi.i = mype;
     MPI_Allreduce(&xdi, &ydi, 1, MPI_DOUBLE_INT, MPI_MINLOC,
-            MPI_COMM_WORLD);
+            mpi_comm);
     x = ydi.d;
     xpe = ydi.i;
 #endif
@@ -81,7 +85,7 @@ void globalSum(int& x) {
     if (numpe == 1) return;
 #ifdef USE_MPI
     int y;
-    MPI_Allreduce(&x, &y, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&x, &y, 1, MPI_INT, MPI_SUM, mpi_comm);
     x = y;
 #endif
 }
@@ -91,7 +95,7 @@ void globalSum(int64_t& x) {
     if (numpe == 1) return;
 #ifdef USE_MPI
     int64_t y;
-    MPI_Allreduce(&x, &y, 1, MPI_INT64_T, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&x, &y, 1, MPI_INT64_T, MPI_SUM, mpi_comm);
     x = y;
 #endif
 }
@@ -101,7 +105,7 @@ void globalSum(double& x) {
     if (numpe == 1) return;
 #ifdef USE_MPI
     double y;
-    MPI_Allreduce(&x, &y, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&x, &y, 1, MPI_DOUBLE, MPI_SUM, mpi_comm);
     x = y;
 #endif
 }
@@ -113,7 +117,7 @@ void gather(int x, int* y) {
         return;
     }
 #ifdef USE_MPI
-    MPI_Gather(&x, 1, MPI_INT, y, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&x, 1, MPI_INT, y, 1, MPI_INT, 0, mpi_comm);
 #endif
 }
 
@@ -124,7 +128,7 @@ void scatter(const int* x, int& y) {
         return;
     }
 #ifdef USE_MPI
-    MPI_Scatter((void*) x, 1, MPI_INT, &y, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter((void*) x, 1, MPI_INT, &y, 1, MPI_INT, 0, mpi_comm);
 #endif
 }
 
@@ -155,7 +159,7 @@ void gathervImpl(
 
     MPI_Gatherv((void*) x, sendcount, MPI_BYTE,
             y, &recvcount[0], &disp[0], MPI_BYTE,
-            0, MPI_COMM_WORLD);
+            0, mpi_comm);
 #endif
 
 }
